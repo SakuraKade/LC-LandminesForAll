@@ -1,3 +1,3 @@
 # LC-LandminesForAll (WIP)
-- [ ] Make it work
-- [ ] Refine it
+- [x] Make it work
+- [ ] Add error handling
