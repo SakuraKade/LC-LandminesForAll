@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>LC_ModTemplate</AssemblyName>
+    <AssemblyName>LC_LandminesForAll</AssemblyName>
     <Description>Templete</Description>
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>LC_ModTemplate</RootNamespace>
+    <RootNamespace>LC_LandminesForAll</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
