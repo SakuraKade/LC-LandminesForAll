@@ -1,11 +1,12 @@
-﻿using HarmonyLib;
+﻿#if DEBUG
+using HarmonyLib;
 using LC_LandminesForAll.Utils;
 using UnityEngine;
 
-namespace LC_LandminesForAll.Patches
+namespace LC_LandminesForAll.Debugging
 {
     [HarmonyPatch(typeof(Landmine))]
-    internal class LandminePatch
+    internal class DebugLandminePatch
     {
         [HarmonyPatch("OnTriggerEnter")]
         [HarmonyPrefix]
@@ -14,13 +15,9 @@ namespace LC_LandminesForAll.Patches
             if (__instance.hasExploded || ReflectionUtils.GetPrivateField<float>(__instance, "pressMineDebounceTimer") > 0f)
                 return true;
 
-            if (other.CompareTag("Enemy"))
-            {
-                const float debounceTime = 0.5f;
-                ReflectionUtils.SetPrivateField(__instance, "pressMineDebounceTimer", debounceTime);
-                __instance.PressMineServerRpc();
+            // Ignore player
+            if (other.CompareTag("Player"))
                 return false;
-            }
 
             return true;
         }
@@ -32,13 +29,12 @@ namespace LC_LandminesForAll.Patches
             if (__instance.hasExploded || ReflectionUtils.GetPrivateField<float>(__instance, "pressMineDebounceTimer") > 0f)
                 return true;
 
-            if (other.CompareTag("Enemy"))
-            {
-                ReflectionUtils.InvokePrivateMethod(__instance, "TriggerMineOnLocalClientByExiting");
+            // Ignore player
+            if (other.CompareTag("Player"))
                 return false;
-            }
 
             return true;
         }
     }
 }
+#endif
