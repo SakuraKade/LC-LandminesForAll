@@ -14,7 +14,7 @@ namespace LC_LandminesForAll.Patches
             if (__instance.hasExploded || ReflectionUtils.GetPrivateField<float>(__instance, "pressMineDebounceTimer") > 0f)
                 return true;
 
-            if (other.TryGetComponent<EnemyAI>(out _) != null)
+            if (other.TryGetComponent<EnemyAI>(out _))
             {
                 const float debounceTime = 0.5f;
                 ReflectionUtils.SetPrivateField(__instance, "pressMineDebounceTimer", debounceTime);
@@ -32,7 +32,7 @@ namespace LC_LandminesForAll.Patches
             if (__instance.hasExploded || ReflectionUtils.GetPrivateField<float>(__instance, "pressMineDebounceTimer") > 0f)
                 return true;
 
-            if (other.TryGetComponent<EnemyAI>(out _) != null)
+            if (other.TryGetComponent<EnemyAI>(out _))
             {
                 ReflectionUtils.InvokePrivateMethod(__instance, "TriggerMineOnLocalClientByExiting");
                 return false;
