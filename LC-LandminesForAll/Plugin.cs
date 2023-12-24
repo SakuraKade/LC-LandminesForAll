@@ -1,7 +1,9 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+#if DEBUG
 using LC_LandminesForAll.Debugging;
+#endif
 using LC_LandminesForAll.Patches;
 
 namespace LC_LandminesForAll
