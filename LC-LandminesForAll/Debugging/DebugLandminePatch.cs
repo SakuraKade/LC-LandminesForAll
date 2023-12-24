@@ -8,6 +8,14 @@ namespace LC_LandminesForAll.Debugging
     [HarmonyPatch(typeof(Landmine))]
     internal class DebugLandminePatch
     {
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        private static void Start(Landmine __instance)
+        {
+            // Log the transform of the landmine
+            Plugin.Logger.LogDebug($"Landmine position: {__instance.transform.position}\nRotation: {__instance.transform.eulerAngles}\nScale: {__instance.transform.localScale}");
+        }
+
         [HarmonyPatch("OnTriggerEnter")]
         [HarmonyPrefix]
         private static bool OnTriggerEnter(Landmine __instance, Collider other)
