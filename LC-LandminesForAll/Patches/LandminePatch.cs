@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using LC_LandminesForAll.Utils;
+using System.Linq;
 using UnityEngine;
 
 namespace LC_LandminesForAll.Patches
@@ -7,45 +8,73 @@ namespace LC_LandminesForAll.Patches
     [HarmonyPatch(typeof(Landmine))]
     internal class LandminePatch
     {
-        private static bool enemyOnMine = false;
+        const int LineOfSightLayer = 18;
+        const int EnemyLayer = 19;
 
-        [HarmonyPatch("Update")]
-        [HarmonyPrefix]
-        private static bool Update(Landmine __instance)
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        private static void Start(Landmine __instance)
         {
-            if (__instance.hasExploded)
-                return true;
-            
-            if (enemyOnMine && !HasEnemiesOnMine(__instance))
+            // Copy the existing collider trigger
+            BoxCollider mineTrigger = __instance.GetComponents<BoxCollider>().FirstOrDefault(x => x.isTrigger);
+            if (mineTrigger == null)
             {
-                enemyOnMine = false;
-                ReflectionUtils.InvokePrivateMethod(__instance, "TriggerMineOnLocalClientByExiting");
-                return true;
+                Plugin.Logger.LogError($"Could not find mine trigger collider on mine at {__instance.transform.position}");
+                return;
             }
 
-            if (HasEnemiesOnMine(__instance))
-            {
-                enemyOnMine = true;
-                const float debounceTime = 0.5f;
-                ReflectionUtils.SetPrivateField(__instance, "pressMineDebounceTimer", debounceTime);
-                __instance.PressMineServerRpc();
-                return true;
-            }
-
-            return true;
+            // Create a new collider trigger
+            const float monsterTriggerSizeMultiplier = 2f;
+            BoxCollider newTrigger = __instance.gameObject.AddComponent<BoxCollider>();
+            newTrigger.isTrigger = true;
+            newTrigger.size = mineTrigger.size * monsterTriggerSizeMultiplier;
+            newTrigger.center = mineTrigger.center;
+            newTrigger.enabled = true;
+            newTrigger.includeLayers = 1 << EnemyLayer;
         }
 
-        private static bool HasEnemiesOnMine(Landmine __instance)
+        private static void TriggerDebounce(Landmine __instance)
         {
-            RaycastHit[] sphereCast = Physics.SphereCastAll(__instance.transform.position, 1f, Vector3.up, 0f);
+            Transform closestEnemy = GetClosestEnemyForLogging(__instance);
+            Plugin.Logger.LogDebug($"Triggering debounce on mine at {__instance.transform.position} with closest enemy at {closestEnemy.position} at {Vector3.Distance(__instance.transform.position, closestEnemy.transform.position)} units away.");
+
+            const float debounceTime = 0.5f;
+            ReflectionUtils.SetPrivateField(__instance, "pressMineDebounceTimer", debounceTime);
+            __instance.PressMineServerRpc();
+        }
+
+        private static void TriggerMineExplosion(Landmine __instance)
+        {
+            Transform closestEnemy = GetClosestEnemyForLogging(__instance);
+            Plugin.Logger.LogDebug($"Triggering debounce on mine at {__instance.transform.position} with closest enemy at {closestEnemy.position} at {Vector3.Distance(__instance.transform.position, closestEnemy.transform.position)} units away.");
+
+            ReflectionUtils.InvokePrivateMethod(__instance, "TriggerMineOnLocalClientByExiting");
+        }
+
+        /// <summary>
+        /// Expensive method, only use for logging
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
+        private static Transform GetClosestEnemyForLogging(Landmine __instance)
+        {
+            LayerMask layerMask = 1 << EnemyLayer;
+            RaycastHit[] sphereCast = Physics.SphereCastAll(__instance.transform.position, radius: 10000f, Vector3.up, maxDistance: 0f, layerMask);
+            Transform closestEnemy = null;
+            float closestDistance = float.MaxValue;
             foreach (var hit in sphereCast)
             {
                 if (hit.collider.CompareTag("Enemy"))
                 {
-                    return true;
+                    float distance = Vector3.Distance(__instance.transform.position, hit.transform.position);
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closestEnemy = hit.transform;
+                    }
                 }
             }
-            return false;
+            return closestEnemy;
         }
 
         [HarmonyPatch("OnTriggerEnter")]
@@ -57,9 +86,7 @@ namespace LC_LandminesForAll.Patches
 
             if (other.CompareTag("Enemy"))
             {
-                const float debounceTime = 0.5f;
-                ReflectionUtils.SetPrivateField(__instance, "pressMineDebounceTimer", debounceTime);
-                __instance.PressMineServerRpc();
+                TriggerDebounce(__instance);
                 return false;
             }
 
@@ -75,7 +102,7 @@ namespace LC_LandminesForAll.Patches
 
             if (other.CompareTag("Enemy"))
             {
-                ReflectionUtils.InvokePrivateMethod(__instance, "TriggerMineOnLocalClientByExiting");
+                TriggerMineExplosion(__instance);
                 return false;
             }
 
