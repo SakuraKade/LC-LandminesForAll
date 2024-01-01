@@ -1,4 +1,5 @@
 ﻿#if DEBUG
+//#define DEBUG_LANDMINES
 using HarmonyLib;
 using LC_LandminesForAll.Utils;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace LC_LandminesForAll.Debugging
     [HarmonyPatch(typeof(Landmine))]
     internal class DebugLandminePatch
     {
+#if DEBUG_LANDMINES
         [HarmonyPatch("Start")]
         [HarmonyPostfix]
         private static void Start(Landmine __instance)
@@ -43,6 +45,7 @@ namespace LC_LandminesForAll.Debugging
 
             return true;
         }
+#endif
     }
 }
 #endif

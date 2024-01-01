@@ -5,6 +5,7 @@ using HarmonyLib;
 using LC_LandminesForAll.Debugging;
 #endif
 using LC_LandminesForAll.Patches;
+using System.IO;
 
 namespace LC_LandminesForAll
 {
@@ -13,10 +14,20 @@ namespace LC_LandminesForAll
     {
         private Harmony _harmony;
         internal static new ManualLogSource Logger;
+        public static string ThisPluginFolder => Path.Combine(Paths.PluginPath, "Sakura-LandminesForAll");
+
+#if DEBUG
+        private DebugLoggerRedirect _debugLoggerRedirect;
+#endif
 
         private void Awake()
         {
             Logger = base.Logger;
+
+#if DEBUG
+            // Start the debug logger redirect first.
+            _debugLoggerRedirect = new DebugLoggerRedirect(base.Logger);
+#endif
 
             // Patches
             _harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
